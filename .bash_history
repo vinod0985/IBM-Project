@@ -750,3 +750,19 @@ git add .
 git commit -m "my"
 git remote add origin https://github.com/ravikiranmaroju1/IBM-Project.git
 git push -u origin main
+git clone https://github.com/vinod0985/IBM-Project.git
+git add . 
+git init
+git add . 
+git clone https://github.com/vinod0985/IBM-Project.git
+git add . 
+git commit -m "test"
+git remote add origin https://github.com/vinod0985/IBM-Project.git
+git push -u origin main
+git config --list
+git config --global user.name vinod0985 
+git config --global user.email vinod.kavati89@gmail.com
+git pull origin main
+git push --force-with-lease origin main
+git push 
+git push --set-upstream origin master
