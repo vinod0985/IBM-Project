@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+	
+	environment{
+	     MAVEN_HOME = '/opt/app/swgwda/startup/projects/eric-swgwda'
+	     ENV_SET = '/opt/app/swgwda/startup/projects/eric-swgwda/JAVA-SET-ENV'
+	     JAVA_HOME = '/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.362.b08-1.el7_9.x86_64'
+	     HELM_CHART = '/opt/app/swgwda/startup/projects/eric-swgwda/charts'
+	     GIT_HOME = 'feature/FEB_DROP_2023'
+	     DOCKER_LOGIN = 'armdocker.rnd.ericsson.se'
+	     K8_HOME = '/opt/app/swgwda/startup'
+	     HELM_PATH = '/opt/app/swgwda/startup/swgwda'
+		 LINUX_PER = 'chmod +x mvnw'
+		 HELM_REPO = '/opt/app/swgwda/startup'
+		 SUDO_ACCESS = 'sudo'
+
+	 }
+	 stages {
+        stage('SonarGate') {
+          steps {
+             script{
+                  ansiColor('x-term') {
+                    sh script:'''
+                    #!/bin/bash
+                    sudo su - root
+                    whoami
+                    cd /opt/app/swgwda/startup/projects/eric-swgwda/
+                    export PATH=$PATH:/opt/sonar-scanner/bin
+                    sonar-scanner -v
+                    id
+                    whoami
+                    sudo su - root
+                    sonar-scanner -Dsonar.projectKey=eric-swgwda1 -Dsonar.host.url=http://10.120.10.102:9000 -Dsonar.login=1038733000123dab0e14f2848c18c32824a6a468 -Dsonar.java.binaries=target/classes -Dsonar.sources=/opt/app/swgwda/startup/projects/eric-swgwda -Dsonar.qualitygate=5 -Dsonar.qualitygate.wait=true
+                    id
+                    '''	
+        }	
+        }
+        }
+      }
+    }
+}

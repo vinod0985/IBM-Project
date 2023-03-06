@@ -1,0 +1,18 @@
+Download the latest version of Docker Compose:
+
+bash
+Copy code
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+Set the executable permission for the downloaded binary:
+
+bash
+Copy code
+sudo chmod +x /usr/local/bin/docker-compose
+Verify the installation by running the following command to check the version of Docker Compose:
+
+css
+Copy code
+docker-compose --version
+This should output the version of Docker Compose installed on your system.
+
+Note: The above steps assume that your RHEL 7.9 system has access to the internet to download the necessary packages and dependencies.

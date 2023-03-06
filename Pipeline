@@ -1,0 +1,139 @@
+pipeline {
+    agent any
+
+    environment{
+        MAVEN_HOME = '/opt/app/swgwda/startup/projects/eric-swgwda'
+        // This is the maven home directory //
+        ENV_SET = '/opt/app/swgwda/startup/projects/eric-swgwda/JAVA-SET-ENV'
+        // Charts Location //
+        HELM_CHART = '/opt/app/swgwda/startup/projects/eric-swgwda/charts'
+        // Git latest March Repo //
+        GIT_HOME = 'feature/MARCH_DROP_2023'
+        // Docker Credentails //
+        DOCKER_LOGIN = 'armdocker.rnd.ericsson.se'
+        // Kubernetes home path //
+        K8_HOME = '/opt/app/swgwda/startup'
+        // Helm Path //
+        HELM_PATH = '/opt/app/swgwda/startup/swgwda'
+        // Linux permissions running without sudo //
+        LINUX_PER = 'chmod +x mvnw'
+        HELM_REPO = '/opt/app/swgwda/startup'
+        // This is the URL for the Artifactory server to save the data //
+        ARTIFACTORY_URL = 'https://arm.sero.gic.ericsson.se/artifactory/proj-eric-swgwda-ci-internal-helm/eric-swgwda/eric-swgwda-0.1.0-1'
+
+    }
+
+    stages {
+        stage("Clean") {
+            steps {
+                sh script:'''
+#!/bin/bash
+                cd $MAVEN_HOME
+                $LINUX_PER
+                ./mvnw clean
+                '''
+            }
+        }
+        stage("Init") {
+            steps {
+                sh script:'''
+#!/bin/bash 
+                echo "$JOB_NAME:$BUILD_NUMBER:$BUILD_TAG"
+                '''
+            }
+        }
+        stage("Lint") {
+            steps {
+                sh script:'''
+#!/bin/bash
+                cd $HELM_CHART
+                export PATH=$PATH:/usr/local/bin/
+                helm lint ./eric-swgwda
+                '''
+            }
+        }
+        stage("Generate") {
+            steps {
+                sh script:'''
+#!/bin/bash
+                cd $MAVEN_HOME
+                git reset --hard
+                git pull
+                git checkout $GIT_HOME
+                git pull
+                '''
+            }
+        }
+        stage("Build") {
+            steps {
+                sh script:'''
+#!/bin/bash
+                cd $MAVEN_HOME
+                $LINUX_PER
+                ./mvnw install -DskipTests
+                '''
+            }
+        }
+        stage("Test") {
+            steps {
+                script{
+                    ansiColor('x-term') {
+                        sh script:'''
+#!/bin/bash
+                        cd $MAVEN_HOME
+                        ./mvnw test
+                        '''
+                    }
+                }
+            }
+        }
+        stage("SonarQube") {
+            steps {
+                script{
+                    ansiColor('x-term') {
+                        sh script:'''
+#!/bin/bash
+                        cd $MAVEN_HOME
+                        ./mvnw sonar:sonar
+                        '''
+                    }
+                }
+            }
+        }
+        stage("SonarGate") {
+            steps {
+                sh script:'''
+#!/bin/bash
+                cd $MAVEN_HOME
+                export PATH=$PATH:/opt/app/swgwda/startup/projects/sonar-scanner/sonar-scanner-4.8.0.2856-linux/bin
+                docker run -e SONAR_HOST_URL=http://10.120.10.102:9000/ -e SONAR_LOGIN=admin -e PROJECT_HOME=/opt/app/swgwda/startup/projects/eric-swgwda -e PROJECT_KEY=eric-swgwda -e PROJECT_NAME=eric-swgwda -v /opt/app/swgwda/startup/projects/eric-swgwda:/usr/src sonarsource/sonar-scanner-cli -Dsonar.java.binaries=target/classes -Dsonar.qualitygate=2 -Dsonar.qualitygate.wait=true -Dsonar.sources=src/main/java
+                '''
+            }
+        }
+        stage("Image") {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker_id', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh script:'''
+#!/bin/bash
+                    cd $MAVEN_HOME/target
+                    cp -rf eric-swgwda-0.1.0-1.jar $MAVEN_HOME/docker/
+                    cd $MAVEN_HOME/docker/
+                    docker login armdocker.rnd.ericsson.se --username="${USERNAME}" --password="${PASSWORD}"
+                    docker build -f "${MAVEN_HOME}/docker/Dockerfile" -t armdocker.rnd.ericsson.se/proj-eric-swgwda-ci-internal/eric-swgwda:"$BUILD_NUMBER" --rm .
+                    docker image ls
+                    '''
+                }
+            }
+        }
+        stage("Package") {
+            steps {
+                sh script:'''
+#!/bin/bash
+                cd $HELM_CHART
+                export PATH=$PATH:/usr/local/bin/helm
+                /usr/local/bin/helm package ./eric-swgwda
+                '''
+            }
+        }
+    }
+}

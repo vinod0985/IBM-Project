@@ -1,0 +1,22 @@
+pipeline {
+agent any
+  
+  stages {
+    stage('maven') {
+      steps {
+	     script{
+	         withSonarQubeEnv('sonarqube') {
+	          ansiColor('x-term') {      
+               sh script:'''
+               #!/bin/bash
+               sudo su -
+               cd /var/lib/jenkins/workspace/sonar-scm/
+               sudo docker run -e SONAR_HOST_URL=http://54.166.33.97:9000            -e SONAR_LOGIN=admin            -e PROJECT_HOME=/var/lib/jenkins/workspace/sonar-scm            -e PROJECT_KEY=app            -e PROJECT_NAME=app            -v /var/lib/jenkins/workspace/sonar-scm:/usr/src            sonarsource/sonar-scanner-cli -Dsonar.qualitygate=AYZtiQbxHaU4FuUwzU-x -Dsonar.qualitygate.wait=true
+               '''
+	          }
+	        }
+	      }
+        }
+      }
+    }
+}    

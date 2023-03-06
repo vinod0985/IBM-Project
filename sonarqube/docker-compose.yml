@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  sonarqube:
+    image: sonarqube:latest
+    ports:
+      - "9000:9000"
+    environment:
+      - SONARQUBE_JDBC_USERNAME=sonar
+      - SONARQUBE_JDBC_PASSWORD=sonar
+    volumes:
+      - sonarqube_conf:/opt/sonarqube/conf
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonar
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  sonarqube_conf:
+  sonarqube_data:
+  sonarqube_logs:
+  db-data:
